@@ -7,9 +7,13 @@ from tkinter import *
 from tkinter import ttk
 import csv
 import os
+import sys
 
 app = Tk() #instancia o app
-app.geometry('400x200') #tamanho da tela
+app.geometry('600x250') #tamanho da tela
+#archive path
+dirname = os.path.dirname(__file__)
+filename = os.path.join(dirname, 'base_produtos.csv')
 
 def callbackFunc():
 	resultString.set("{} - {}".format(codInt.get(),quantEtiquetas.get()))
@@ -23,8 +27,8 @@ def busca_produto(p_cod_produto):
     # path_file="etiquetas_zpl\\base_produtos.csv"
 
     desc=""
-    p_cod_produto.set(codInt.get())
-    print()
+    print("rodando")
+    #print(p_cod_produto.get())
 
     with open(filename, newline='') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',', quotechar='"')
@@ -40,17 +44,19 @@ def busca_produto(p_cod_produto):
             print("Código não encontrado")
             #sys.exit()
 
+def retornocod():
+    codProcura.set("{}".format(codInt.get()))
+    print(codProcura.get())
 
 #vars
-p_cod_produto = StringVar()
 
 resultString= StringVar()
 quantEtiquetas = StringVar()
-codInt = StringVar()
+codInt = IntVar()
 nomeProd = StringVar()
-#archive path
-dirname = os.path.dirname(__file__)
-filename = os.path.join(dirname, 'base_produtos.csv')
+
+codProcura = IntVar()
+
 
 #Labels
 nomeProg = ttk.Label(app, text="Etiquetas").grid(sticky='E')
@@ -66,6 +72,7 @@ entryqantEtiquetas = ttk.Entry(app, textvariable=quantEtiquetas).grid(column=1, 
 #buttons
 btnShow = ttk.Button(app, text="show", command=callbackFunc).grid(column=0, row=3)
 btnQuit = ttk.Button(app, text="Quit", command=app.destroy).grid(column=1, row=3)
-btnProcura = ttk.Button(app, text="Procura csv", command=busca_produto).grid(column=2, row=3)
+btnProcura = ttk.Button(app, text="Procura csv", command=lambda: busca_produto(codProcura.get())).grid(column=2, row=3)
+btnRetorno = ttk.Button(app, command=retornocod).grid(column=3, row=3)
 
 app.mainloop()
