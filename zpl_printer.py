@@ -19,12 +19,12 @@ import PyPDF2
 
 app = Tk()  # instancia o app
 app.geometry('500x150')  # tamanho da tela
-app.title("Etiquetas Petz")
+app.title("Etiquetas")  # Nome da aba aberta
 
 # archive path
 dirname = os.path.dirname(__file__)
-filename = os.path.join(dirname, 'base_produtos_andy.csv')
-# vars
+filename = os.path.join(dirname, 'base_produtos.csv')
+# Variaveis
 quantEtiquetas = IntVar()
 codInt = StringVar()
 resultString = StringVar()
@@ -100,9 +100,6 @@ def cria_linha(p_qtd_etiqueta, p_cod_produto, p_linhas):
 
     #  inicio
     zpl_linha += "^XA"
-    pos_inicial_x = 20  # caralha de linha
-    pos_inicial_y = 10
-    passo_linha = 30
 
     #  Busca informações de produto
     produto_desc, produto_cod_barras = busca_produto(p_cod_produto)
@@ -226,6 +223,6 @@ ttk.Entry(app, textvariable=numPedido).grid(column=1, row=3)
 # buttons
 ttk.Button(app, text="Gera Etiquetas", command=existe_prod).grid(column=0, row=4, padx=0, pady=10)
 ttk.Button(app, text="Sair", command=app.destroy).grid(column=1, row=4, padx=0, pady=0)
-Button(app, text="Finalizar PDF", command=merge).grid(column=2, row=4, padx=0, pady=10)
+ttk.Button(app, text="Finalizar PDF", command=merge).grid(column=2, row=4, padx=0, pady=10)
 
 app.mainloop()
