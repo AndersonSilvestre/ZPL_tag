@@ -1,0 +1,6 @@
+Programa para a geração de etiquetas no formato 20x35mm
+-----
+Esse script foi feito pra gerar etiquetas no formato 20x35mm para impressoras térmicas que utilizam a linguagem ZPL.
+Essas etiquetas contém o nome de um produto e o código EAN13.
+
+As informações dos produtos são armazenadas em um arquivo CSV onde é possível incluir novos.
