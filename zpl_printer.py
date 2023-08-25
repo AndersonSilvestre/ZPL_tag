@@ -45,7 +45,7 @@ class Aplicativo(tk.Tk):
     def __init__(self, *args, **kwargs):
         # __init__ function for class Tk
         tk.Tk.__init__(self, *args, **kwargs)
-
+        self.geometry('500x200')
         container = tk.Frame(self)
         container.pack(side="top", fill="both", expand=True)
         self.frames = {}
@@ -75,8 +75,6 @@ class TelaPrincipal(tk.Frame):
             [20, 35], [30, 75], [50, 105]
         ]
 
-
-
         # Labels
         ttk.Label(self, text="Insira o Cod do produto").grid(column=0, row=1, padx=5, pady=5)
         ttk.Label(self, text="Insira a Quant de etiquetas").grid(column=0, row=2, padx=5, pady=5)
@@ -88,11 +86,12 @@ class TelaPrincipal(tk.Frame):
         ttk.Entry(self, textvariable=self.numPedido).grid(column=1, row=3)
 
         # buttons
+        # tk.Frame(self, width=500, height=80, borderwidth=2, relief="groove").grid(column=0, row=4, columnspan=10, sticky='nsew')
         ttk.Button(self, text="Gera Etiquetas", command=self.existe_prod).grid(column=0, row=4, padx=0, pady=10)
-        ttk.Button(self, text="Sair", command=self.quit).grid(column=1, row=4, padx=0, pady=0)
+        ttk.Button(self, text="Sair", command=self.quit).grid(column=1, row=4, padx=3, pady=0)
         ttk.Button(self, text="Finalizar PDF", command=self.merge).grid(column=2, row=4, padx=0, pady=10)
         ttk.Button(self, text="Adiciona Item", command=lambda: controller.show_frame(Adiciona))\
-            .grid(column=2, row=5, padx=0, pady=10)
+            .grid(column=1, row=5, padx=0, pady=1)
 
     def lista_pdf(self):
         # Nomeia e gera a lista de pdfs
@@ -275,42 +274,61 @@ class Adiciona(tk.Frame):
         tk.Label(self, text="Digite o Nome\ndo Produto").grid(column=1, row=2)
         tk.Label(self, text="Digite os 12 digitos\ndo Codigo EAN").grid(column=1, row=3)
 
-        tk.Entry(self, textvariable=self.cod).grid(column=2, row=1, columnspan=1)
-        tk.Entry(self, textvariable=self.nome).grid(column=2, row=2, columnspan=1)
-        tk.Entry(self, textvariable=self.ean).grid(column=2, row=3, columnspan=1)
+        self.codigo = tk.Entry(self, textvariable=self.cod)
+        self.codigo.grid(column=2, row=1, columnspan=1)
+        self.nome = tk.Entry(self, textvariable=self.nome)
+        self.nome.grid(column=2, row=2, columnspan=1)
+        self.ean = tk.Entry(self, textvariable=self.ean)
+        self.ean.grid(column=2, row=3, columnspan=1)
 
-        tk.Button(self, text="Verificar", command=self.calcula).grid(column=2, row=4)
-        tk.Button(self, text="quit", command=self.destroy).grid(column=3, row=4)
-        tk.Button(self, text="Cria Linha", command=self.cria_linha).grid(column=1, row=5)
+        tk.Button(self, text="Verificar", command=self.calcula).grid(column=1, row=4)
+        # tk.Button(self, text="quit", command=self.destroy).grid(column=3, row=4)
+        tk.Button(self, text="quit", command=lambda: controller.show_frame(TelaPrincipal)).grid(column=3, row=4)
+        # tk.Button(self, text="Cria Linha", command=self.cria_linha).grid(column=2, row=4)
+
+    def limpa(self):
+        entries = (self.codigo, self.nome, self.ean)
+        for entry in entries:
+            entry.delete(0, tk.END)
+
 
     def calcula(self):
         total = 0
-        lista = list(self.ean.get())
+        self.lista = list(self.ean.get())
+        if len(self.lista) <= 11 or len(self.lista) >= 13:
+            print('Nao tem 12')
+            messagebox.showinfo('Código', 'Inserir 12 digitos p/ o calculo')
+        else:
+            for idx, i in enumerate(self.lista):
+                #print(idx, i)
+                if int(idx) % 2 == 0:
+                    total += int(i)
+                else:
+                    total += int(i) * 3
 
-        for idx, i in enumerate(lista):
-            #print(idx, i)
-            if int(idx) % 2 == 0:
-                total += int(i)
-            else:
-                total += int(i) * 3
-
-        lista.append((10 - (total % 10)) % 10)
-        lista = ''.join(str(i) for i in lista)
-
-        #print(total)
-        #print(verificador)
-        print(lista)
-        #tkinter.Label(self, text=verificador).grid(column=1, row=4)
-        self.linha = self.cod.get() + ',' + self.nome.get() + ',' + str(lista)
-        print(self.linha)
-        #return verificador
-        # print(impar, par)
+            self.lista.append((10 - (total % 10)) % 10)
+            lista = ''.join(str(i) for i in self.lista)
+            print(lista)
+            #print(self.linha)
+            tk.Button(self, text="Cria Linha", command=self.cria_linha).grid(column=2, row=4)
 
     def cria_linha(self):
-        self.calcula()
-        with open('tst_input.txt', 'a') as arquivo:
-            arquivo.write(self.linha)
-        messagebox.showinfo("Item", "Item Gravado")
+        if self.cod.get() == '':
+            messagebox.showinfo('Cod', 'Inserir Codigo do material')
+        elif self.nome.get() == '':
+            messagebox.showinfo('Nome', 'Inserir Nome do material')
+
+        elif len(self.lista) <= 11 or len(self.lista) >= 13:
+            messagebox.showinfo('Código', 'Inserir 12 digitos p/ o calculo22')
+        else:
+            self.calcula()
+            linha = self.cod.get() + ',' + self.nome.get() + ',' + str(self.lista) + '\n'
+            with open('tst_input.txt', 'a') as arquivo:
+                arquivo.write(linha)
+                self.limpa()
+            messagebox.showinfo("Item", "Item Gravado")
+
+
 
 
 app = Aplicativo()
