@@ -10,9 +10,6 @@ from tkinter import *
 from tkinter import ttk
 import tkinter as tk
 from tkinter import messagebox
-from tkinter.messagebox import showinfo
-from tkinter.filedialog import askopenfilename
-from ctypes import cast
 import requests
 import shutil
 import csv
@@ -26,19 +23,7 @@ import PyPDF2
 
 # archive path
 dirname = os.path.dirname(__file__)
-filename = os.path.join(dirname, 'base_produtos_andy.csv')
-# Variaveis
-'''
-quant_etiquetas = IntVar()
-cod_int = StringVar()
-resultString = StringVar()
-numPedido = StringVar()
-nomePdf = StringVar()
-pdfs = []
-modelo_etiqueta_mm = [
-    [20, 35], [30, 75], [50, 105]
-]
-'''
+filename = os.path.join(dirname, 'base_produtos.csv')
 
 
 class Aplicativo(tk.Tk):
@@ -81,17 +66,26 @@ class TelaPrincipal(tk.Frame):
         ttk.Label(self, text="Insira o Numero do pedido").grid(column=0, row=3, padx=5, pady=5)
 
         # Entrys
-        ttk.Entry(self, textvariable=self.cod_int).grid(column=1, row=1, padx=5, pady=5)
-        ttk.Entry(self, textvariable=self.quant_etiquetas).grid(column=1, row=2, padx=5, pady=5)
+        self.codigo = tk.Entry(self, textvariable=self.cod_int)
+        self.codigo.grid(column=1, row=1, padx=5, pady=5)
+        self.etiqueta = tk.Entry(self, textvariable=self.quant_etiquetas)
+        self.etiqueta.grid(column=1, row=2, padx=5, pady=5)
         ttk.Entry(self, textvariable=self.numPedido).grid(column=1, row=3)
 
         # buttons
         # tk.Frame(self, width=500, height=80, borderwidth=2, relief="groove").grid(column=0, row=4, columnspan=10, sticky='nsew')
         ttk.Button(self, text="Gera Etiquetas", command=self.existe_prod).grid(column=0, row=4, padx=0, pady=10)
-        ttk.Button(self, text="Sair", command=self.quit).grid(column=1, row=4, padx=3, pady=0)
+        self.btn_sair = ttk.Button(self, text="Sair", command=self.quit)
+        self.btn_sair.grid(column=1, row=4, padx=3, pady=0)
         ttk.Button(self, text="Finalizar PDF", command=self.merge).grid(column=2, row=4, padx=0, pady=10)
         ttk.Button(self, text="Adiciona Item", command=lambda: controller.show_frame(Adiciona))\
             .grid(column=1, row=5, padx=0, pady=1)
+        
+    def limpa(self,cod,eti):
+        entries = (cod,eti)
+        for entry in entries:
+            entry.delete(0, tk.END)
+        self.btn_sair.destroy()
 
     def lista_pdf(self):
         # Nomeia e gera a lista de pdfs
@@ -121,8 +115,7 @@ class TelaPrincipal(tk.Frame):
         zpl = self.cria_zpl(self.cod_int.get().upper(), self.quant_etiquetas.get(), modelo)
 
         print("ZPL completo.")
-        #  print(zpl)
-
+       
         #  Configuração do POST
         largura_inches = 4
         altura_inches = 0.78
@@ -144,9 +137,11 @@ class TelaPrincipal(tk.Frame):
                 self.merge()
         else:
             print('Error: ' + response.text)
+        self.limpa(self.codigo, self.etiqueta)
+
+    
 
     def cria_linha(self, p_qtd_etiqueta, p_cod_produto, p_linhas):
-        #  Função
         #  "Uma linha de etiquetas, com a logica de colocar menos etiquetas."
         #  Funciona apenas para o modelo especifico de 3 etiquetas por hora
 
@@ -211,8 +206,6 @@ class TelaPrincipal(tk.Frame):
         """
         Função para buscar info de produto
         """
-        #  path_file="base_produtos.csv"
-        #  path_file="etiquetas_zpl\\base_produtos.csv"
 
         desc = ""
 
@@ -225,7 +218,6 @@ class TelaPrincipal(tk.Frame):
                     cod_barra = row[2]
 
         if desc != "":
-            # print(p_cod_produto, desc, cod_barra)
             return desc, cod_barra
         else:
             print("Código não encontrado")
@@ -268,7 +260,6 @@ class Adiciona(tk.Frame):
         self.cod = StringVar()
         self.ean = StringVar()
         self.nome = StringVar()
-        # self.verificador = 0
 
         tk.Label(self, text="Digite o Codigo").grid(column=1, row=1)
         tk.Label(self, text="Digite o Nome\ndo Produto").grid(column=1, row=2)
@@ -283,7 +274,7 @@ class Adiciona(tk.Frame):
 
         tk.Button(self, text="Verificar", command=self.calcula).grid(column=1, row=4)
         # tk.Button(self, text="quit", command=self.destroy).grid(column=3, row=4)
-        tk.Button(self, text="quit", command=lambda: controller.show_frame(TelaPrincipal)).grid(column=3, row=4)
+        tk.Button(self, text="Voltar", command=lambda: controller.show_frame(TelaPrincipal)).grid(column=3, row=4)
         # tk.Button(self, text="Cria Linha", command=self.cria_linha).grid(column=2, row=4)
 
     def limpa(self):
@@ -291,44 +282,61 @@ class Adiciona(tk.Frame):
         for entry in entries:
             entry.delete(0, tk.END)
 
+    def busca_produto(self, p_cod_produto):
+        desc = ""
+
+        with open(filename, newline='') as csvfile:
+            spamreader = csv.reader(csvfile, delimiter=',', quotechar='"')
+            for row in spamreader:
+                #  se encontra código retorna valores
+                if row[0] == str(p_cod_produto):
+                    desc = row[1]
+
+        if desc != "":
+            # print(p_cod_produto, desc, cod_barra)
+            print("Produto já existe")
+            return desc
+
 
     def calcula(self):
-        total = 0
         self.lista = list(self.ean.get())
-        if len(self.lista) <= 11 or len(self.lista) >= 13:
-            print('Nao tem 12')
-            messagebox.showinfo('Código', 'Inserir 12 digitos p/ o calculo')
+        descricao = self.busca_produto(self.codigo.get().upper())
+        if descricao != None:
+            messagebox.showinfo('Já existe', 'Material já cadastrado')
         else:
-            for idx, i in enumerate(self.lista):
-                #print(idx, i)
-                if int(idx) % 2 == 0:
-                    total += int(i)
-                else:
-                    total += int(i) * 3
+            if len(self.lista) <= 11 or len(self.lista) >= 13:
+                print('Nao tem 12')
+                messagebox.showinfo('Código', 'Inserir 12 digitos p/ o calculo')
+            else:
 
-            self.lista.append((10 - (total % 10)) % 10)
-            lista = ''.join(str(i) for i in self.lista)
-            print(lista)
-            #print(self.linha)
-            tk.Button(self, text="Cria Linha", command=self.cria_linha).grid(column=2, row=4)
+                #print(self.linha)
+                tk.Button(self, text="Cria Linha", command=self.cria_linha).grid(column=2, row=4)
 
     def cria_linha(self):
+        total = 0
         if self.cod.get() == '':
             messagebox.showinfo('Cod', 'Inserir Codigo do material')
         elif self.nome.get() == '':
             messagebox.showinfo('Nome', 'Inserir Nome do material')
 
         elif len(self.lista) <= 11 or len(self.lista) >= 13:
-            messagebox.showinfo('Código', 'Inserir 12 digitos p/ o calculo22')
+            messagebox.showinfo('Código', 'Inserir 12 digitos p/ o calculo')
         else:
             self.calcula()
-            linha = self.cod.get() + ',' + self.nome.get() + ',' + str(self.lista) + '\n'
+            for idx, i in enumerate(self.lista):
+                if int(idx) % 2 == 0:
+                    total += int(i)
+                else:
+                    total += int(i) * 3
+            self.lista.append((10 - (total % 10)) % 10)
+            lista = ''.join(str(i) for i in self.lista)
+            print(lista)
+            linha = self.cod.get() + ',' + self.nome.get() + ',' + str(lista) + '\n'
+            print(linha)
             with open('tst_input.txt', 'a') as arquivo:
                 arquivo.write(linha)
                 self.limpa()
             messagebox.showinfo("Item", "Item Gravado")
-
-
 
 
 app = Aplicativo()
