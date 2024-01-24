@@ -20,50 +20,20 @@ import os
 import sys
 import PyPDF2
 
+import customtkinter
+
 # app = Tk()  # instancia o app
 # app.geometry('500x150')  # tamanho da tela
 # app.title("Etiquetas")  # Nome da aba aberta
 
 # archive path
 dirname = os.path.dirname(__file__)
-filename = os.path.join(dirname, 'base_produtos_andy.csv')
-# Variaveis
-'''
-quant_etiquetas = IntVar()
-cod_int = StringVar()
-resultString = StringVar()
-numPedido = StringVar()
-nomePdf = StringVar()
-pdfs = []
-modelo_etiqueta_mm = [
-    [20, 35], [30, 75], [50, 105]
-]
-'''
+filename = os.path.join(dirname, 'base_produtos.csv')
 
 
-class Aplicativo(tk.Tk):
-    def __init__(self, *args, **kwargs):
-        # __init__ function for class Tk
-        tk.Tk.__init__(self, *args, **kwargs)
-        self.geometry('500x200')
-        container = tk.Frame(self)
-        container.pack(side="top", fill="both", expand=True)
-        self.frames = {}
-
-        for F in (TelaPrincipal, Adiciona):
-            frame = F(container, self)
-            self.frames[F] = frame
-            frame.grid(row=0, column=0, sticky="nsew")
-        self.show_frame(TelaPrincipal)
-
-    def show_frame(self, cont):
-        frame = self.frames[cont]
-        frame.tkraise()
-
-
-class TelaPrincipal(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
+class TelaPrincipal(customtkinter.CTk):
+    def __init__(self):
+        super().__init__()
 
         self.quant_etiquetas = IntVar()
         self.cod_int = StringVar()
@@ -71,47 +41,75 @@ class TelaPrincipal(tk.Frame):
         self.numPedido = StringVar()
         self.nomePdf = StringVar()
         self.pdfs = []
+        self.topo = None
         self.modelo_etiqueta_mm = [
             [20, 35], [30, 75], [50, 105]
         ]
 
         # Labels
-        ttk.Label(self, text="Insira o Cod do produto").grid(column=0, row=1, padx=5, pady=5)
-        ttk.Label(self, text="Insira a Quant de etiquetas").grid(column=0, row=2, padx=5, pady=5)
-        ttk.Label(self, text="Insira o Numero do pedido").grid(column=0, row=3, padx=5, pady=5)
+        customtkinter.CTkLabel(self, text="Insira o Cod do produto").grid(column=0, row=1, padx=5, pady=5)
+        customtkinter.CTkLabel(self, text="Insira a Quant de etiquetas").grid(column=0, row=2, padx=5, pady=5)
+        customtkinter.CTkLabel(self, text="Insira o Numero do pedido").grid(column=0, row=3, padx=5, pady=5)
 
         # Entrys
-        ttk.Entry(self, textvariable=self.cod_int).grid(column=1, row=1, padx=5, pady=5)
-        ttk.Entry(self, textvariable=self.quant_etiquetas).grid(column=1, row=2, padx=5, pady=5)
-        ttk.Entry(self, textvariable=self.numPedido).grid(column=1, row=3)
+        customtkinter.CTkEntry(self, textvariable=self.cod_int).grid(column=1, row=1, padx=5, pady=5)
+        customtkinter.CTkEntry(self, textvariable=self.quant_etiquetas).grid(column=1, row=2, padx=5, pady=5)
+        customtkinter.CTkEntry(self, textvariable=self.numPedido).grid(column=1, row=3)
 
         # buttons
         # tk.Frame(self, width=500, height=80, borderwidth=2, relief="groove").grid(column=0, row=4, columnspan=10, sticky='nsew')
-        ttk.Button(self, text="Gera Etiquetas", command=self.existe_prod).grid(column=0, row=4, padx=0, pady=10)
-        ttk.Button(self, text="Sair", command=self.quit).grid(column=1, row=4, padx=3, pady=0)
-        ttk.Button(self, text="Finalizar PDF", command=self.merge).grid(column=2, row=4, padx=0, pady=10)
-        ttk.Button(self, text="Adiciona Item", command=lambda: controller.show_frame(Adiciona))\
-            .grid(column=1, row=5, padx=0, pady=1)
+        customtkinter.CTkButton(self, text="Gera Etiquetas", command=self.existe_prod).grid(column=0, row=4, padx=0, pady=10)
+        customtkinter.CTkButton(self, text="Sair", command=self.quit).grid(column=1, row=4, padx=3, pady=0)
+        customtkinter.CTkButton(self, text="Finalizar PDF", command=self.merge).grid(column=2, row=4, padx=0, pady=10)
+        customtkinter.CTkButton(self, text="Adiciona Item", command=self.abre_adiciona).grid(column=1, row=5, padx=0, pady=1)
+        
+    # Abertura das telas de Alerta
+     
+    def abre_adiciona(self):
+        if self.topo is None or not self.topo.winfo_exists():
+            self.topo = Adiciona(self)  # create window if its None or destroyed
+        else:
+            self.topo.focus()  # if window exists focus it
+
+    def abre_n_encontrado(self):
+        if self.topo is None or not self.topo.winfo_exists():
+            self.topo = ProdNaoEncontrado(self)
+        else:
+            self.topo.focus()
+    
+    def inserir_etiqueta(self):
+        if self.topo is None or not self.topo.winfo_exists():
+            self.topo = InserirEtiquetas(self)
+        else:
+            self.topo.focus()
+    
+    def num_pedido(self):
+        if self.topo is None or not self.topo.winfo_exists():
+            self.topo = NumeroPedido(self)
+        else:
+            self.topo.focus()
 
     def lista_pdf(self):
         # Nomeia e gera a lista de pdfs
         self.nomePdf.set("item" + self.cod_int.get().upper() + "-" + self.numPedido.get() + ".pdf")
         self.pdfs.append(self.nomePdf.get())
         return self.pdfs
+    
+    # Fim das telas de alarme
 
     def existe_prod(self):
         # Verifica se o Produto existe e se foi digitado alguma quantidade de etiquetas e pedido.
         desc = self.busca_produto(self.cod_int.get().upper())
         if desc is not None:
-            if self.quant_etiquetas.get() >= 1:
+            if self.quant_etiquetas.get() >= 1 or self.quant_etiquetas.get() == None:
                 if self.numPedido.get() != "":
                     self.gera_pdf()
                 else:
-                    messagebox.showinfo("Pedido", "Favor inserir número do pedido")
+                    self.num_pedido()
             else:
-                messagebox.showinfo("Etiquetas", "Favor inserir quantidade de etiquetas!")
+                self.inserir_etiqueta()
         else:
-            messagebox.showinfo("Não encontrado", "Produto não encontrado")
+            self.abre_n_encontrado()
 
     def gera_pdf(self):
         #  parametros de execucao
@@ -137,11 +135,14 @@ class TelaPrincipal(tk.Frame):
             response.raw.decode_content = True
             with open(self.nomePdf.get(), 'wb') as out_file:  # change file name for PNG images
                 shutil.copyfileobj(response.raw, out_file)
+                NovaEtiqueta(self)
+            '''    
                 aksbox = messagebox.askquestion("Nova Etiqueta", "Gostaria de incluir mais produtos?")
             if aksbox == 'yes':
                 pass
             else:
                 self.merge()
+            '''
         else:
             print('Error: ' + response.text)
 
@@ -256,13 +257,12 @@ class TelaPrincipal(tk.Frame):
         merger.write("Pedido - " + self.numPedido.get() + ".pdf")
         merger.close()
         os.system("find -type f -name 'item*' -delete")
-        messagebox.showinfo("PDF", "PDF Gerado")
-        self.quit()
+        PdfGerado(self)
 
 
-class Adiciona(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
+class Adiciona(customtkinter.CTkToplevel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         # Variaveis
         self.cod = StringVar()
@@ -270,47 +270,66 @@ class Adiciona(tk.Frame):
         self.nome = StringVar()
         # self.verificador = 0
 
-        tk.Label(self, text="Digite o Codigo").grid(column=1, row=1)
-        tk.Label(self, text="Digite o Nome\ndo Produto").grid(column=1, row=2)
-        tk.Label(self, text="Digite os 12 digitos\ndo Codigo EAN").grid(column=1, row=3)
+        customtkinter.CTkLabel(self, text="Digite o Codigo").grid(column=1, row=1)
+        customtkinter.CTkLabel(self, text="Digite o Nome\ndo Produto").grid(column=1, row=2)
+        customtkinter.CTkLabel(self, text="Digite os 12 digitos\ndo Codigo EAN").grid(column=1, row=3)
 
-        self.codigo = tk.Entry(self, textvariable=self.cod)
+        self.codigo = customtkinter.CTkEntry(self, textvariable=self.cod)
         self.codigo.grid(column=2, row=1, columnspan=1)
-        self.nome = tk.Entry(self, textvariable=self.nome)
+        self.nome = customtkinter.CTkEntry(self, textvariable=self.nome)
         self.nome.grid(column=2, row=2, columnspan=1)
-        self.ean = tk.Entry(self, textvariable=self.ean)
+        self.ean = customtkinter.CTkEntry(self, textvariable=self.ean)
         self.ean.grid(column=2, row=3, columnspan=1)
 
-        tk.Button(self, text="Verificar", command=self.calcula).grid(column=1, row=4)
-        # tk.Button(self, text="quit", command=self.destroy).grid(column=3, row=4)
-        tk.Button(self, text="quit", command=lambda: controller.show_frame(TelaPrincipal)).grid(column=3, row=4)
-        # tk.Button(self, text="Cria Linha", command=self.cria_linha).grid(column=2, row=4)
+        customtkinter.CTkButton(self, text="Verificar", command=self.calcula).grid(column=1, row=4)
+        # customtkinter.CTkButton(self, text="quit", command=self.destroy).grid(column=3, row=4)
+        customtkinter.CTkButton(self, text="Voltar", command=self.destroy).grid(column=3, row=4)
+        # customtkinter.CTkButton(self, text="Cria Linha", command=self.cria_linha).grid(column=2, row=4)
 
     def limpa(self):
         entries = (self.codigo, self.nome, self.ean)
         for entry in entries:
             entry.delete(0, tk.END)
 
+    def busca_produto(self, p_cod_produto):
+        desc = ""
+
+        with open(filename, newline='') as csvfile:
+            spamreader = csv.reader(csvfile, delimiter=',', quotechar='"')
+            for row in spamreader:
+                #  se encontra código retorna valores
+                if row[0] == str(p_cod_produto):
+                    desc = row[1]
+
+        if desc != "":
+            # print(p_cod_produto, desc, cod_barra)
+            print("Produto já existe")
+            return desc
+
 
     def calcula(self):
         total = 0
         self.lista = list(self.ean.get())
-        if len(self.lista) <= 11 or len(self.lista) >= 13:
-            print('Nao tem 12')
-            messagebox.showinfo('Código', 'Inserir 12 digitos p/ o calculo')
+        descricao = self.busca_produto(self.codigo.get().upper())
+        if descricao != None:
+            messagebox.showinfo('Já existe', 'Material já cadastrado')
         else:
-            for idx, i in enumerate(self.lista):
-                #print(idx, i)
-                if int(idx) % 2 == 0:
-                    total += int(i)
-                else:
-                    total += int(i) * 3
+            if len(self.lista) <= 11 or len(self.lista) >= 13:
+                print('Nao tem 12')
+                messagebox.showinfo('Código', 'Inserir 12 digitos p/ o calculo')
+            else:
+                for idx, i in enumerate(self.lista):
+                    #print(idx, i)
+                    if int(idx) % 2 == 0:
+                        total += int(i)
+                    else:
+                        total += int(i) * 3
 
-            self.lista.append((10 - (total % 10)) % 10)
-            lista = ''.join(str(i) for i in self.lista)
-            print(lista)
-            #print(self.linha)
-            tk.Button(self, text="Cria Linha", command=self.cria_linha).grid(column=2, row=4)
+                self.lista.append((10 - (total % 10)) % 10)
+                lista = ''.join(str(i) for i in self.lista)
+                print(lista)
+                #print(self.linha)
+                customtkinter.CTkButton(self, text="Cria Linha", command=self.cria_linha).grid(column=2, row=4)
 
     def cria_linha(self):
         if self.cod.get() == '':
@@ -319,7 +338,7 @@ class Adiciona(tk.Frame):
             messagebox.showinfo('Nome', 'Inserir Nome do material')
 
         elif len(self.lista) <= 11 or len(self.lista) >= 13:
-            messagebox.showinfo('Código', 'Inserir 12 digitos p/ o calculo22')
+            messagebox.showinfo('Código', 'Inserir 12 digitos p/ o calculo')
         else:
             self.calcula()
             linha = self.cod.get() + ',' + self.nome.get() + ',' + str(self.lista) + '\n'
@@ -328,8 +347,63 @@ class Adiciona(tk.Frame):
                 self.limpa()
             messagebox.showinfo("Item", "Item Gravado")
 
+# Telas de Alerta
 
+class ProdNaoEncontrado(customtkinter.CTkToplevel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.geometry("250x100")
 
+        self.label = customtkinter.CTkLabel(self, text="Produto não encontrado")
+        self.label.grid(column=1, row=1)
+        self.quit = customtkinter.CTkButton(self, text='Voltar', command=self.destroy)
+        self.quit.grid(column=1, row=2, pady=5, padx=5, sticky='nsew')
 
-app = Aplicativo()
+class InserirEtiquetas(customtkinter.CTkToplevel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.geometry("250x150")
+
+        self.label = customtkinter.CTkLabel(self, text="Inserir Etiquetas")
+        self.label.grid(column=1, row=1)
+        self.btn = customtkinter.CTkButton(self, text="Voltar", command= self.destroy)
+        self.btn.grid(column=1, row=2)
+
+class NumeroPedido(customtkinter.CTkToplevel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.geometry("250x150")
+        self.label = customtkinter.CTkLabel(self, text= "Insira o número do Pedido")
+        self.label.grid(column=1, row=1)
+        self.btn = customtkinter.CTkButton(self, text="Voltar", command=self.destroy)
+        self.btn.grid(column=1, row=2)
+
+class PdfGerado(customtkinter.CTkToplevel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.geometry("250x150")
+        self.title("PDF")
+        self.label = customtkinter.CTkLabel(self, text= "PDF gerado")
+        self.label.grid(column=1, row=1)
+        self.btn = customtkinter.CTkButton(self, text="Voltar", command=self.quit)
+        self.btn.grid(column=1, row=2)
+
+class NovaEtiqueta(customtkinter.CTkToplevel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.geometry("250x150")
+        self.title("Nova Etiqueta")
+        self.label = customtkinter.CTkLabel(self, text= "Nova Etiqueta")
+        self.label.grid(column=1, row=1)
+        self.btn = customtkinter.CTkButton(self, text="Sim", command=self.destroy)
+        self.btn.grid(column=1, row=2)
+        self.btn = customtkinter.CTkButton(self, text="Não", command=self.acrescenta)
+        self.btn.grid(column=2, row=2)
+
+    def acrescenta(self):
+        TelaPrincipal.merge(self)
+        PdfGerado(self)
+        #self.quit()
+
+app = TelaPrincipal()
 app.mainloop()
